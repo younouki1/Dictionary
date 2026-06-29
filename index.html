@@ -72,6 +72,14 @@
       <label>Default word language (translate from)
         <select id="s-source-lang"></select>
       </label>
+
+      <h3 class="section-head">Backup</h3>
+      <p class="hint">Save all words and sources to a file, or restore from one. Importing merges (nothing is deleted).</p>
+      <button id="export-btn" type="button" class="wide-ghost">⬇ Export words (JSON)</button>
+      <button id="import-btn" type="button" class="wide-ghost">⬆ Import words (JSON)</button>
+      <input id="import-file" type="file" accept="application/json,.json" hidden>
+      <p id="backup-status" class="hint"></p>
+
       <div class="actions">
         <button id="settings-close" type="button" class="primary">Done</button>
       </div>

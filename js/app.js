@@ -41,6 +41,10 @@
     settingsModal: $('settings-modal'),
     sNative: $('s-native'),
     sSourceLang: $('s-source-lang'),
+    exportBtn: $('export-btn'),
+    importBtn: $('import-btn'),
+    importFile: $('import-file'),
+    backupStatus: $('backup-status'),
     settingsClose: $('settings-close'),
     // Edit modal
     modal: $('word-modal'),
@@ -179,6 +183,44 @@
   function saveSettings() {
     const prefs = Storage.getPrefs();
     Storage.setPrefs({ ...prefs, tgt: els.sNative.value, src: els.sSourceLang.value });
+  }
+
+  // --- Backup ---
+  async function exportData() {
+    const json = JSON.stringify(Storage.exportData(), null, 2);
+    const filename = `dictionary-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    els.backupStatus.textContent = '';
+
+    // On iPhone the native share sheet (save to Files / iCloud) is the best path.
+    const file = new File([json], filename, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'Dictionary backup' }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; /* else fall back to download */ }
+    }
+    // Fallback: download via a temporary link.
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function importFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const res = Storage.importData(JSON.parse(reader.result));
+        refresh();
+        els.backupStatus.textContent =
+          `Imported: +${res.wordsAdded} words (updated ${res.wordsUpdated}), ` +
+          `+${res.sourcesAdded} sources (updated ${res.sourcesUpdated}).`;
+      } catch {
+        els.backupStatus.textContent = 'Import failed: invalid file.';
+      }
+      els.importFile.value = ''; // allow re-importing the same file
+    };
+    reader.onerror = () => { els.backupStatus.textContent = 'Could not read the file.'; };
+    reader.readAsText(file);
   }
 
   // --- Words tab: filter + list ---
@@ -418,6 +460,9 @@
 
     els.sNative.addEventListener('change', () => { saveSettings(); refresh(); });
     els.sSourceLang.addEventListener('change', saveSettings);
+    els.exportBtn.addEventListener('click', exportData);
+    els.importBtn.addEventListener('click', () => els.importFile.click());
+    els.importFile.addEventListener('change', (e) => { if (e.target.files[0]) importFile(e.target.files[0]); });
     els.settingsClose.addEventListener('click', closeSettings);
     els.settingsModal.addEventListener('click', (e) => { if (e.target === els.settingsModal) closeSettings(); });
 

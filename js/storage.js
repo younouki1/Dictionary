@@ -76,9 +76,55 @@ const Storage = (() => {
   function getPrefs() { return read(K_PREFS, { src: 'en', tgt: 'ru' }); }
   function setPrefs(prefs) { write(K_PREFS, prefs); }
 
+  // --- Backup (export / import) ---
+  function exportData() {
+    return {
+      app: 'dictionary',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      sources: getSources(),
+      words: getWords(),
+    };
+  }
+
+  // Merge an exported file by id (upsert). Never deletes existing data.
+  // Input crosses a trust boundary, so validate and skip malformed entries.
+  function importData(data) {
+    if (!data || typeof data !== 'object') throw new Error('Invalid backup');
+    const inSources = Array.isArray(data.sources) ? data.sources : [];
+    const inWords = Array.isArray(data.words) ? data.words : [];
+
+    const sources = getSources();
+    const words = getWords();
+    const sById = new Map(sources.map(s => [s.id, s]));
+    const wById = new Map(words.map(w => [w.id, w]));
+    let sourcesAdded = 0, sourcesUpdated = 0, wordsAdded = 0, wordsUpdated = 0;
+
+    for (const s of inSources) {
+      if (!s || typeof s.name !== 'string') continue;
+      const id = s.id || newId();
+      if (sById.has(id)) { Object.assign(sById.get(id), s, { id }); sourcesUpdated++; }
+      else { const ns = { ...s, id }; sources.push(ns); sById.set(id, ns); sourcesAdded++; }
+    }
+    for (const w of inWords) {
+      if (!w || typeof w.text !== 'string') continue;
+      const id = w.id || newId();
+      if (wById.has(id)) { Object.assign(wById.get(id), w, { id }); wordsUpdated++; }
+      else {
+        const nw = { ...w, id, createdAt: w.createdAt || Date.now() };
+        words.push(nw); wById.set(id, nw); wordsAdded++;
+      }
+    }
+
+    write(K_SOURCES, sources);
+    write(K_WORDS, words);
+    return { sourcesAdded, sourcesUpdated, wordsAdded, wordsUpdated };
+  }
+
   return {
     getWords, saveWord, deleteWord,
     getSources, saveSource, deleteSource,
     getPrefs, setPrefs,
+    exportData, importData,
   };
 })();

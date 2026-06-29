@@ -230,6 +230,13 @@ body {
   padding: 18px 16px calc(env(safe-area-inset-bottom) + 18px);
 }
 .sheet h2 { margin: 4px 0 16px; font-size: 19px; }
+#import-file { display: none; } /* hidden file input; opened via the Import button */
+.sheet .section-head {
+  margin: 18px 0 6px;
+  font-size: 15px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
 .sheet label {
   display: block;
   margin-bottom: 14px;

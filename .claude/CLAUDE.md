@@ -49,6 +49,8 @@ Home Screen". No backend, no accounts: all data lives in the browser's
 - word: `{ id, text, translation, definition, example, sourceLang, targetLang, sourceId, note, createdAt }`
 - source: `{ id, name, type }` where type ∈ book | article | video | other
 - prefs: `{ src, tgt, activeSourceId }` — `tgt` is the user's native (target) language
+- Backup: Settings sheet exports `{ app, version, exportedAt, sources, words }` as JSON;
+  import merges by id (`Storage.exportData` / `Storage.importData`), never deletes
 
 ## Conventions
 

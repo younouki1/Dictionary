@@ -60,7 +60,13 @@ Pages rebuilds `main` automatically. Live site:
 ## Data backup
 
 Words live in Safari's `localStorage`. Clearing the site's data in iOS Settings
-will erase them. JSON export/import is not implemented yet.
+will erase them, and data does not sync between devices. To back up, open the
+**`⚙`** sheet → **Backup**:
+
+- **Export words (JSON)** downloads a `dictionary-backup-YYYY-MM-DD.json` file (on
+  iPhone via the share sheet — save to Files/iCloud or send it to yourself).
+- **Import words (JSON)** restores from such a file. Import **merges by id**
+  (adds new entries, updates matching ones); nothing is deleted.
 
 ## Translation limit
 
