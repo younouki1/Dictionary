@@ -34,6 +34,7 @@
     // Add sheet
     addModal: $('add-modal'),
     addNative: $('add-native'),
+    addForm: $('add-form'),
     qSrc: $('q-src'),
     qSource: $('q-source'),
     qWord: $('q-word'),
@@ -460,7 +461,8 @@
 
     els.qSrc.addEventListener('change', savePrefsFromAdd);
     els.qSource.addEventListener('change', savePrefsFromAdd);
-    els.qWord.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addQuick(); } });
+    // Form submit (keyboard return/Done) and the Done button both fetch + save.
+    els.addForm.addEventListener('submit', (e) => { e.preventDefault(); addQuick(); });
     els.addClose.addEventListener('click', doneAdd);
     els.addModal.addEventListener('click', (e) => { if (e.target === els.addModal) closeAdd(); });
 

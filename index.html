@@ -62,8 +62,11 @@
       <label>Source
         <select id="q-source"></select>
       </label>
-      <input id="q-word" type="text" placeholder="Type a word, press Enter"
-             autocomplete="off" autocapitalize="none" enterkeyhint="done">
+      <!-- A form so the iOS keyboard's return/Done key reliably submits (adds) the word. -->
+      <form id="add-form">
+        <input id="q-word" type="text" placeholder="Type a word, press Enter"
+               autocomplete="off" autocapitalize="none" enterkeyhint="done">
+      </form>
       <p id="add-status" class="hint"></p>
       <div class="actions">
         <button id="add-close" type="button" class="primary">Done</button>
