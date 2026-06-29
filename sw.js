@@ -1,12 +1,13 @@
 // Service worker: caches the app shell for offline use.
 // Bump the CACHE version when files change to refresh the cache.
-const CACHE = 'dict-v2';
+const CACHE = 'dict-v3';
 const SHELL = [
   '.',
   'index.html',
   'css/styles.css',
   'js/storage.js',
   'js/translate.js',
+  'js/dictionary.js',
   'js/app.js',
   'manifest.webmanifest',
   'icons/icon-192.png',

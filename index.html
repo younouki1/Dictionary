@@ -24,11 +24,23 @@
 
   <!-- Word list -->
   <main id="view-list" class="view">
+    <!-- Quick add: pick languages + source once, then just type a word + Enter -->
+    <div class="addbar">
+      <div class="addbar-row">
+        <select id="q-src" aria-label="From language"></select>
+        <span class="arrow">→</span>
+        <select id="q-tgt" aria-label="To language"></select>
+        <select id="q-source" aria-label="Source"></select>
+      </div>
+      <input id="q-word" type="text" placeholder="Add a word, then press Enter"
+             autocomplete="off" autocapitalize="none" enterkeyhint="done">
+    </div>
+
     <div class="toolbar">
       <input id="search" type="search" placeholder="Search by word or translation" autocomplete="off">
     </div>
     <div id="word-groups" class="groups"></div>
-    <p id="empty-list" class="empty hidden">No words yet. Tap + to add your first one.</p>
+    <p id="empty-list" class="empty hidden">No words yet. Type a word above and press Enter.</p>
   </main>
 
   <!-- Sources -->
@@ -37,12 +49,10 @@
     <p id="empty-sources" class="empty hidden">No sources yet. They appear when you add words.</p>
   </main>
 
-  <button id="fab" class="fab" aria-label="Add word">+</button>
-
-  <!-- Modal: add / edit word -->
+  <!-- Modal: edit a word (manual corrections / re-fetch) -->
   <div id="word-modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="sheet">
-      <h2 id="word-modal-title">New word</h2>
+      <h2 id="word-modal-title">Edit word</h2>
 
       <label>Word
         <input id="f-text" type="text" autocomplete="off" autocapitalize="none">
@@ -58,12 +68,19 @@
       </div>
 
       <label>Translation
-        <div class="with-btn">
-          <input id="f-translation" type="text" autocomplete="off">
-          <button id="f-translate-btn" type="button">Translate</button>
-        </div>
-        <span id="f-translate-status" class="hint"></span>
+        <input id="f-translation" type="text" autocomplete="off">
       </label>
+
+      <label>Definition
+        <textarea id="f-definition" rows="2"></textarea>
+      </label>
+
+      <label>Example
+        <textarea id="f-example" rows="2"></textarea>
+      </label>
+
+      <button id="f-refetch" type="button" class="wide-ghost">↻ Re-fetch from web</button>
+      <span id="f-refetch-status" class="hint"></span>
 
       <label>Source
         <select id="f-source"></select>
@@ -83,6 +100,7 @@
 
   <script src="js/storage.js"></script>
   <script src="js/translate.js"></script>
+  <script src="js/dictionary.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
