@@ -52,6 +52,7 @@
     fSrc: $('f-src'),
     fTgt: $('f-tgt'),
     fTranslation: $('f-translation'),
+    fTranscription: $('f-transcription'),
     fDefinition: $('f-definition'),
     fExample: $('f-example'),
     fRefetch: $('f-refetch'),
@@ -73,6 +74,17 @@
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const langName = (code) => (LANGS.find(l => l[0] === code) || [code, code])[1];
   const sourceTypeName = (t) => (SOURCE_TYPES.find(s => s[0] === t) || [t, t])[1];
+
+  // IPA transcription with the primary-stressed syllable bolded.
+  // The stressed syllable is the run right after the ˈ mark, up to the next boundary.
+  function transcriptionHtml(ipa) {
+    const i = ipa.indexOf('ˈ');
+    if (i === -1) return esc(ipa);
+    const boundaries = new Set(['.', 'ˈ', 'ˌ', '/', ' ']);
+    let j = i + 1;
+    while (j < ipa.length && !boundaries.has(ipa[j])) j++;
+    return esc(ipa.slice(0, i + 1)) + '<b>' + esc(ipa.slice(i + 1, j)) + '</b>' + esc(ipa.slice(j));
+  }
 
   function fillSelect(sel, pairs, selected) {
     sel.innerHTML = pairs
@@ -166,6 +178,7 @@
     if (dict.ok) {
       latest.definition = dict.definition;
       latest.example = dict.example || '';
+      latest.transcription = dict.transcription || '';
     }
     Storage.saveWord(latest);
     pending.delete(id);
@@ -306,7 +319,8 @@
       <div class="word ${isOpen ? 'open' : ''}">
         <div class="word-head" data-toggle="${esc(w.id)}">
           <div class="word-main">
-            <div class="word-text">${esc(w.text)}</div>
+            <div class="word-text">${esc(w.text)}${w.transcription
+              ? ` <span class="word-transcription">${transcriptionHtml(w.transcription)}</span>` : ''}</div>
             ${translationHtml}
           </div>
           <span class="chevron">›</span>
@@ -355,6 +369,7 @@
 
     els.fText.value = word.text;
     els.fTranslation.value = word.translation || '';
+    els.fTranscription.value = word.transcription || '';
     els.fDefinition.value = word.definition || '';
     els.fExample.value = word.example || '';
     els.fNote.value = word.note || '';
@@ -378,7 +393,11 @@
     ]);
     els.fRefetch.disabled = false;
     if (tr.ok) els.fTranslation.value = tr.text;
-    if (dict.ok) { els.fDefinition.value = dict.definition; els.fExample.value = dict.example || ''; }
+    if (dict.ok) {
+      els.fDefinition.value = dict.definition;
+      els.fExample.value = dict.example || '';
+      els.fTranscription.value = dict.transcription || '';
+    }
     els.fRefetchStatus.textContent = (tr.ok || dict.ok) ? '' : 'Nothing found. Edit manually.';
   }
 
@@ -401,6 +420,7 @@
       createdAt: existing ? existing.createdAt : undefined,
       text,
       translation: els.fTranslation.value.trim(),
+      transcription: els.fTranscription.value.trim(),
       definition: els.fDefinition.value.trim(),
       example: els.fExample.value.trim(),
       sourceLang: els.fSrc.value,

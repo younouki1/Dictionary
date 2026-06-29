@@ -121,6 +121,12 @@ body {
 }
 .word-main { min-width: 0; }
 .word-text { font-weight: 600; font-size: 16px; }
+.word-transcription {
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--muted);
+}
+.word-transcription b { color: var(--text); font-weight: 700; }
 .word-translation { color: var(--text); margin-top: 2px; }
 .word-translation.muted { color: var(--muted); }
 .chevron {

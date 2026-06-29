@@ -46,7 +46,8 @@ Home Screen". No backend, no accounts: all data lives in the browser's
 
 ## Data model (localStorage)
 
-- word: `{ id, text, translation, definition, example, sourceLang, targetLang, sourceId, note, createdAt }`
+- word: `{ id, text, translation, transcription, definition, example, sourceLang, targetLang, sourceId, note, createdAt }`
+  (`transcription` is IPA from the Dictionary API; the ˈ stress mark is highlighted in the UI)
 - source: `{ id, name, type }` where type ∈ book | article | video | other
 - prefs: `{ src, tgt, activeSourceId }` — `tgt` is the user's native (target) language
 - Backup: Settings sheet exports `{ app, version, exportedAt, sources, words }` as JSON;
