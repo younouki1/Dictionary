@@ -11,8 +11,8 @@
   const SOURCE_TYPES = [
     ['book', 'Book'], ['article', 'Article'], ['video', 'Video'], ['other', 'Other'],
   ];
-  const NO_SOURCE = '__none__';
-  const NEW_SOURCE = '__new__';
+  const BASE_SOURCE = '__base__'; // the always-present default source ("General")
+  const BASE_NAME = 'General';
   const ALL_SOURCES = '__all__';
 
   // --- DOM ---
@@ -26,7 +26,9 @@
     groups: $('word-groups'),
     emptyList: $('empty-list'),
     sourceList: $('source-list'),
-    emptySources: $('empty-sources'),
+    newSourceName: $('new-source-name'),
+    newSourceType: $('new-source-type'),
+    addSourceBtn: $('add-source-btn'),
     fabAdd: $('fab-add'),
     fabSettings: $('fab-settings'),
     // Add sheet
@@ -58,7 +60,6 @@
     fRefetch: $('f-refetch'),
     fRefetchStatus: $('f-refetch-status'),
     fSource: $('f-source'),
-    fNewSource: $('f-new-source'),
     fNote: $('f-note'),
     fCancel: $('f-cancel'),
     fSave: $('f-save'),
@@ -92,11 +93,10 @@
       .join('');
   }
 
-  // Source options shared by the add/edit sheets.
-  function sourceOptions(includeNone) {
-    const sources = Storage.getSources();
-    const opts = includeNone ? [[NO_SOURCE, 'No source']] : [];
-    return [...opts, ...sources.map(s => [s.id, s.name]), [NEW_SOURCE, '➕ New source…']];
+  // Source options for the add/edit selects: the base source + user sources.
+  // No "create" option here — sources are created only on the Sources tab.
+  function sourceOptions() {
+    return [[BASE_SOURCE, BASE_NAME], ...Storage.getSources().map(s => [s.id, s.name])];
   }
 
   // --- Add sheet ---
@@ -104,7 +104,7 @@
     const prefs = Storage.getPrefs();
     els.addNative.textContent = langName(prefs.tgt);
     fillSelect(els.qSrc, LANGS, prefs.src);
-    fillSelect(els.qSource, sourceOptions(true), prefs.activeSourceId || NO_SOURCE);
+    fillSelect(els.qSource, sourceOptions(), prefs.activeSourceId || BASE_SOURCE);
     els.addStatus.textContent = '';
     els.qWord.value = '';
     els.addModal.classList.remove('hidden');
@@ -117,23 +117,8 @@
     Storage.setPrefs({
       ...prefs,
       src: els.qSrc.value,
-      activeSourceId: els.qSource.value === NO_SOURCE ? null : els.qSource.value,
+      activeSourceId: els.qSource.value === BASE_SOURCE ? null : els.qSource.value,
     });
-  }
-
-  // Handle the "➕ New source…" choice in the add-sheet source select.
-  function onQuickSourceChange() {
-    if (els.qSource.value === NEW_SOURCE) {
-      const name = prompt('New source name:');
-      if (name && name.trim()) {
-        const s = Storage.saveSource({ name: name.trim(), type: 'book' });
-        fillSelect(els.qSource, sourceOptions(true), s.id);
-      } else {
-        els.qSource.value = Storage.getPrefs().activeSourceId || NO_SOURCE;
-      }
-    }
-    savePrefsFromAdd();
-    refresh();
   }
 
   // Type a word + Enter -> save immediately, then fetch translation + context.
@@ -238,7 +223,7 @@
 
   // --- Words tab: filter + list ---
   function renderFilter() {
-    const opts = [[ALL_SOURCES, 'All sources'], ...Storage.getSources().map(s => [s.id, s.name]), [NO_SOURCE, 'No source']];
+    const opts = [[ALL_SOURCES, 'All sources'], [BASE_SOURCE, BASE_NAME], ...Storage.getSources().map(s => [s.id, s.name])];
     if (!opts.some(([v]) => v === filterSourceId)) filterSourceId = ALL_SOURCES;
     fillSelect(els.filterSource, opts, filterSourceId);
   }
@@ -246,10 +231,10 @@
   function renderList() {
     const term = els.search.value.trim().toLowerCase();
     const sources = Storage.getSources();
-    const sourceName = (id) => (sources.find(s => s.id === id) || {}).name || 'No source';
+    const sourceName = (id) => (sources.find(s => s.id === id) || {}).name || BASE_NAME;
 
     let words = Storage.getWords();
-    if (filterSourceId === NO_SOURCE) words = words.filter(w => !w.sourceId);
+    if (filterSourceId === BASE_SOURCE) words = words.filter(w => !w.sourceId);
     else if (filterSourceId !== ALL_SOURCES) words = words.filter(w => w.sourceId === filterSourceId);
     if (term) {
       words = words.filter(w =>
@@ -269,16 +254,16 @@
 
     const bySource = new Map();
     for (const w of words) {
-      const key = w.sourceId || NO_SOURCE;
+      const key = w.sourceId || BASE_SOURCE;
       if (!bySource.has(key)) bySource.set(key, []);
       bySource.get(key).push(w);
     }
     const order = [...sources.map(s => s.id).filter(id => bySource.has(id))];
-    if (bySource.has(NO_SOURCE)) order.push(NO_SOURCE);
+    if (bySource.has(BASE_SOURCE)) order.push(BASE_SOURCE);
 
     els.groups.innerHTML = order.map((key) => {
       const list = bySource.get(key).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      const title = key === NO_SOURCE ? 'No source' : sourceName(key);
+      const title = key === BASE_SOURCE ? BASE_NAME : sourceName(key);
       return `
         <section class="group">
           <div class="group-head">
@@ -334,14 +319,18 @@
     const sources = Storage.getSources();
     const words = Storage.getWords();
     const countFor = (id) => words.filter(w => w.sourceId === id).length;
+    const baseCount = words.filter(w => !w.sourceId).length;
 
-    if (sources.length === 0) {
-      els.sourceList.innerHTML = '';
-      els.emptySources.classList.remove('hidden');
-      return;
-    }
-    els.emptySources.classList.add('hidden');
-    els.sourceList.innerHTML = sources.map((s) => `
+    // The base source is always present and cannot be renamed or deleted.
+    const baseRow = `
+      <div class="source-row">
+        <div>
+          <div>${BASE_NAME}</div>
+          <div class="meta">default · words: ${baseCount}</div>
+        </div>
+      </div>`;
+
+    els.sourceList.innerHTML = baseRow + sources.map((s) => `
       <div class="source-row">
         <div>
           <div>${esc(s.name)}</div>
@@ -352,6 +341,15 @@
           <button class="del" data-delsource="${esc(s.id)}">Delete</button>
         </div>
       </div>`).join('');
+  }
+
+  // Create a source from the Sources tab (the only place sources are created).
+  function addSourceFromTab() {
+    const name = els.newSourceName.value.trim();
+    if (!name) { els.newSourceName.focus(); return; }
+    Storage.saveSource({ name, type: els.newSourceType.value });
+    els.newSourceName.value = '';
+    refresh();
   }
 
   function refresh() {
@@ -365,7 +363,7 @@
     editingId = word.id;
     fillSelect(els.fSrc, LANGS, word.sourceLang);
     fillSelect(els.fTgt, LANGS, word.targetLang);
-    fillSelect(els.fSource, sourceOptions(true), word.sourceId || NO_SOURCE);
+    fillSelect(els.fSource, sourceOptions(), word.sourceId || BASE_SOURCE);
 
     els.fText.value = word.text;
     els.fTranslation.value = word.translation || '';
@@ -373,8 +371,6 @@
     els.fDefinition.value = word.definition || '';
     els.fExample.value = word.example || '';
     els.fNote.value = word.note || '';
-    els.fNewSource.value = '';
-    els.fNewSource.classList.add('hidden');
     els.fRefetchStatus.textContent = '';
 
     els.modal.classList.remove('hidden');
@@ -405,14 +401,7 @@
     const text = els.fText.value.trim();
     if (!text) { els.fText.focus(); return; }
 
-    let sourceId = els.fSource.value;
-    if (sourceId === NEW_SOURCE) {
-      const name = els.fNewSource.value.trim();
-      if (!name) { els.fNewSource.focus(); return; }
-      sourceId = Storage.saveSource({ name, type: 'book' }).id;
-    } else if (sourceId === NO_SOURCE) {
-      sourceId = null;
-    }
+    const sourceId = els.fSource.value === BASE_SOURCE ? null : els.fSource.value;
 
     const existing = Storage.getWords().find(w => w.id === editingId);
     Storage.saveWord({
@@ -440,20 +429,15 @@
     if (name && name.trim()) { s.name = name.trim(); Storage.saveSource(s); refresh(); }
   }
 
+  // Deleting a source never deletes words — they move to the base source (General).
   function deleteSource(id) {
     const s = Storage.getSources().find(x => x.id === id);
     if (!s) return;
     const count = Storage.getWords().filter(w => w.sourceId === id).length;
-    if (count === 0) {
-      if (confirm(`Delete source "${s.name}"?`)) { Storage.deleteSource(id, 'detach'); refresh(); }
-      return;
-    }
-    const keep = confirm(
-      `Source "${s.name}" has ${count} word(s).\n\n` +
-      `OK — keep the words (move them to "No source").\n` +
-      `Cancel — delete the words together with the source.`);
-    Storage.deleteSource(id, keep ? 'detach' : 'delete');
-    refresh();
+    const msg = count
+      ? `Delete source "${s.name}"? Its ${count} word(s) will move to ${BASE_NAME}.`
+      : `Delete source "${s.name}"?`;
+    if (confirm(msg)) { Storage.deleteSource(id, 'detach'); refresh(); }
   }
 
   // --- Tab navigation ---
@@ -473,7 +457,7 @@
     els.fabSettings.addEventListener('click', openSettings);
 
     els.qSrc.addEventListener('change', savePrefsFromAdd);
-    els.qSource.addEventListener('change', onQuickSourceChange);
+    els.qSource.addEventListener('change', savePrefsFromAdd);
     els.qWord.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addQuick(); } });
     els.addClose.addEventListener('click', closeAdd);
     els.addModal.addEventListener('click', (e) => { if (e.target === els.addModal) closeAdd(); });
@@ -486,11 +470,10 @@
     els.settingsClose.addEventListener('click', closeSettings);
     els.settingsModal.addEventListener('click', (e) => { if (e.target === els.settingsModal) closeSettings(); });
 
+    els.addSourceBtn.addEventListener('click', addSourceFromTab);
+    els.newSourceName.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addSourceFromTab(); } });
+
     els.fRefetch.addEventListener('click', refetchModal);
-    els.fSource.addEventListener('change', () => {
-      els.fNewSource.classList.toggle('hidden', els.fSource.value !== NEW_SOURCE);
-      if (els.fSource.value === NEW_SOURCE) els.fNewSource.focus();
-    });
     els.fCancel.addEventListener('click', closeWordModal);
     els.fSave.addEventListener('click', saveWord);
     els.modal.addEventListener('click', (e) => { if (e.target === els.modal) closeWordModal(); });

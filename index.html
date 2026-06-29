@@ -34,8 +34,17 @@
 
   <!-- Sources -->
   <main id="view-sources" class="view hidden">
+    <div class="toolbar">
+      <input id="new-source-name" type="text" placeholder="New source name (book, article…)" autocomplete="off" enterkeyhint="done">
+      <select id="new-source-type" aria-label="Source type">
+        <option value="book">Book</option>
+        <option value="article">Article</option>
+        <option value="video">Video</option>
+        <option value="other">Other</option>
+      </select>
+      <button id="add-source-btn" type="button" class="add-src-btn">Add</button>
+    </div>
     <div id="source-list" class="source-list"></div>
-    <p id="empty-sources" class="empty hidden">No sources yet. They appear when you add words.</p>
   </main>
 
   <!-- Floating buttons -->
@@ -126,7 +135,6 @@
       <label>Source
         <select id="f-source"></select>
       </label>
-      <input id="f-new-source" type="text" class="hidden" placeholder="Source name (book, article…)" autocomplete="off">
 
       <label>Note (optional)
         <textarea id="f-note" rows="2"></textarea>

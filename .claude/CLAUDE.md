@@ -48,7 +48,9 @@ Home Screen". No backend, no accounts: all data lives in the browser's
 
 - word: `{ id, text, translation, transcription, definition, example, sourceLang, targetLang, sourceId, note, createdAt }`
   (`transcription` is IPA from the Dictionary API; the ˈ stress mark is highlighted in the UI)
-- source: `{ id, name, type }` where type ∈ book | article | video | other
+- source: `{ id, name, type }` where type ∈ book | article | video | other.
+  `sourceId: null` means the base source "General" (always present, not user-created).
+  Sources are created only on the Sources tab; deleting a source moves its words to General.
 - prefs: `{ src, tgt, activeSourceId }` — `tgt` is the user's native (target) language
 - Backup: Settings sheet exports `{ app, version, exportedAt, sources, words }` as JSON;
   import merges by id (`Storage.exportData` / `Storage.importData`), never deletes
