@@ -1,0 +1,6 @@
+# Python
+.venv/
+
+# Claude Code personal files (not for team)
+CLAUDE.local.md
+.claude/settings.local.json

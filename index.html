@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Словарь</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <meta name="theme-color" content="#1f6feb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Словарь">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="appbar">
+    <button class="tab" data-view="list" aria-current="true">Слова</button>
+    <button class="tab" data-view="sources">Источники</button>
+  </header>
+
+  <!-- Список слов -->
+  <main id="view-list" class="view">
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Поиск по слову или переводу" autocomplete="off">
+    </div>
+    <div id="word-groups" class="groups"></div>
+    <p id="empty-list" class="empty hidden">Пока пусто. Нажмите + чтобы добавить первое слово.</p>
+  </main>
+
+  <!-- Источники -->
+  <main id="view-sources" class="view hidden">
+    <div id="source-list" class="source-list"></div>
+    <p id="empty-sources" class="empty hidden">Источников ещё нет. Они появятся при добавлении слов.</p>
+  </main>
+
+  <button id="fab" class="fab" aria-label="Добавить слово">+</button>
+
+  <!-- Модалка: добавить/редактировать слово -->
+  <div id="word-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <h2 id="word-modal-title">Новое слово</h2>
+
+      <label>Слово
+        <input id="f-text" type="text" autocomplete="off" autocapitalize="none">
+      </label>
+
+      <div class="row">
+        <label>С языка
+          <select id="f-src"></select>
+        </label>
+        <label>На язык
+          <select id="f-tgt"></select>
+        </label>
+      </div>
+
+      <label>Перевод
+        <div class="with-btn">
+          <input id="f-translation" type="text" autocomplete="off">
+          <button id="f-translate-btn" type="button">Перевести</button>
+        </div>
+        <span id="f-translate-status" class="hint"></span>
+      </label>
+
+      <label>Источник
+        <select id="f-source"></select>
+      </label>
+      <input id="f-new-source" type="text" class="hidden" placeholder="Название источника (книга, статья…)" autocomplete="off">
+
+      <label>Заметка (необязательно)
+        <textarea id="f-note" rows="2"></textarea>
+      </label>
+
+      <div class="actions">
+        <button id="f-cancel" type="button" class="ghost">Отмена</button>
+        <button id="f-save" type="button" class="primary">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/translate.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
