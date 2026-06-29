@@ -20,21 +20,30 @@
   const els = {
     tabs: document.querySelectorAll('.tab'),
     viewWords: $('view-words'),
-    viewAdd: $('view-add'),
     viewSources: $('view-sources'),
-    qSrc: $('q-src'),
-    qTgt: $('q-tgt'),
-    qSource: $('q-source'),
-    qWord: $('q-word'),
-    addStatus: $('add-status'),
     filterSource: $('filter-source'),
     search: $('search'),
     groups: $('word-groups'),
     emptyList: $('empty-list'),
     sourceList: $('source-list'),
     emptySources: $('empty-sources'),
+    fabAdd: $('fab-add'),
+    fabSettings: $('fab-settings'),
+    // Add sheet
+    addModal: $('add-modal'),
+    addNative: $('add-native'),
+    qSrc: $('q-src'),
+    qSource: $('q-source'),
+    qWord: $('q-word'),
+    addStatus: $('add-status'),
+    addClose: $('add-close'),
+    // Settings sheet
+    settingsModal: $('settings-modal'),
+    sNative: $('s-native'),
+    sSourceLang: $('s-source-lang'),
+    settingsClose: $('settings-close'),
+    // Edit modal
     modal: $('word-modal'),
-    modalTitle: $('word-modal-title'),
     fText: $('f-text'),
     fSrc: $('f-src'),
     fTgt: $('f-tgt'),
@@ -50,9 +59,10 @@
     fSave: $('f-save'),
   };
 
-  let editingId = null;          // id of the word being edited, or null
+  let editingId = null;             // id of the word being edited, or null
   let filterSourceId = ALL_SOURCES; // current source filter on the Words tab
-  const pending = new Set();     // ids currently being enriched (translation/context)
+  const expanded = new Set();       // ids of expanded (open) word cards
+  const pending = new Set();        // ids currently being enriched
 
   // --- Helpers ---
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -66,43 +76,47 @@
       .join('');
   }
 
-  // Source options shared by the quick-add bar and the edit modal.
+  // Source options shared by the add/edit sheets.
   function sourceOptions(includeNone) {
     const sources = Storage.getSources();
     const opts = includeNone ? [[NO_SOURCE, 'No source']] : [];
     return [...opts, ...sources.map(s => [s.id, s.name]), [NEW_SOURCE, '➕ New source…']];
   }
 
-  // --- Quick-add bar ---
-  function renderAddBar() {
+  // --- Add sheet ---
+  function openAdd() {
     const prefs = Storage.getPrefs();
+    els.addNative.textContent = langName(prefs.tgt);
     fillSelect(els.qSrc, LANGS, prefs.src);
-    fillSelect(els.qTgt, LANGS, prefs.tgt);
-    const active = prefs.activeSourceId || NO_SOURCE;
-    fillSelect(els.qSource, sourceOptions(true), active);
+    fillSelect(els.qSource, sourceOptions(true), prefs.activeSourceId || NO_SOURCE);
+    els.addStatus.textContent = '';
+    els.qWord.value = '';
+    els.addModal.classList.remove('hidden');
+    els.qWord.focus();
   }
+  function closeAdd() { els.addModal.classList.add('hidden'); }
 
-  function savePrefsFromBar() {
+  function savePrefsFromAdd() {
+    const prefs = Storage.getPrefs();
     Storage.setPrefs({
+      ...prefs,
       src: els.qSrc.value,
-      tgt: els.qTgt.value,
       activeSourceId: els.qSource.value === NO_SOURCE ? null : els.qSource.value,
     });
   }
 
-  // Handle the "➕ New source…" choice in the quick-add source select.
+  // Handle the "➕ New source…" choice in the add-sheet source select.
   function onQuickSourceChange() {
     if (els.qSource.value === NEW_SOURCE) {
       const name = prompt('New source name:');
       if (name && name.trim()) {
         const s = Storage.saveSource({ name: name.trim(), type: 'book' });
-        renderAddBar();
-        els.qSource.value = s.id;
+        fillSelect(els.qSource, sourceOptions(true), s.id);
       } else {
-        els.qSource.value = (Storage.getPrefs().activeSourceId) || NO_SOURCE;
+        els.qSource.value = Storage.getPrefs().activeSourceId || NO_SOURCE;
       }
     }
-    savePrefsFromBar();
+    savePrefsFromAdd();
     refresh();
   }
 
@@ -118,7 +132,7 @@
       definition: '',
       example: '',
       sourceLang: els.qSrc.value,
-      targetLang: els.qTgt.value,
+      targetLang: prefs.tgt,
       sourceId: prefs.activeSourceId || null,
     });
 
@@ -142,7 +156,6 @@
       Dictionary.lookup(word.text, word.sourceLang),
     ]);
 
-    // Word may have been edited/deleted meanwhile — re-read latest.
     const latest = Storage.getWords().find(w => w.id === id);
     if (!latest) { pending.delete(id); refresh(); return; }
     if (tr.ok) latest.translation = tr.text;
@@ -155,15 +168,26 @@
     refresh();
   }
 
-  // Populate the source filter dropdown on the Words tab.
+  // --- Settings sheet ---
+  function openSettings() {
+    const prefs = Storage.getPrefs();
+    fillSelect(els.sNative, LANGS, prefs.tgt);
+    fillSelect(els.sSourceLang, LANGS, prefs.src);
+    els.settingsModal.classList.remove('hidden');
+  }
+  function closeSettings() { els.settingsModal.classList.add('hidden'); }
+  function saveSettings() {
+    const prefs = Storage.getPrefs();
+    Storage.setPrefs({ ...prefs, tgt: els.sNative.value, src: els.sSourceLang.value });
+  }
+
+  // --- Words tab: filter + list ---
   function renderFilter() {
     const opts = [[ALL_SOURCES, 'All sources'], ...Storage.getSources().map(s => [s.id, s.name]), [NO_SOURCE, 'No source']];
-    // Drop a stale selection (e.g. deleted source) back to "All".
     if (!opts.some(([v]) => v === filterSourceId)) filterSourceId = ALL_SOURCES;
     fillSelect(els.filterSource, opts, filterSourceId);
   }
 
-  // --- Render word list ---
   function renderList() {
     const term = els.search.value.trim().toLowerCase();
     const sources = Storage.getSources();
@@ -183,12 +207,11 @@
       els.emptyList.classList.remove('hidden');
       els.emptyList.textContent = (term || filterSourceId !== ALL_SOURCES)
         ? 'Nothing here.'
-        : 'No words yet. Open the Add tab to add one.';
+        : 'No words yet. Tap + to add one.';
       return;
     }
     els.emptyList.classList.add('hidden');
 
-    // Group by source.
     const bySource = new Map();
     for (const w of words) {
       const key = w.sourceId || NO_SOURCE;
@@ -201,19 +224,20 @@
     els.groups.innerHTML = order.map((key) => {
       const list = bySource.get(key).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       const title = key === NO_SOURCE ? 'No source' : sourceName(key);
-      const items = list.map(renderWord).join('');
       return `
         <section class="group">
           <div class="group-head">
             <h3>${esc(title)}</h3>
             <span class="count">${list.length}</span>
           </div>
-          ${items}
+          ${list.map(renderWord).join('')}
         </section>`;
     }).join('');
   }
 
+  // Compact card: word + translation, tap to expand context + actions.
   function renderWord(w) {
+    const isOpen = expanded.has(w.id);
     let translationHtml;
     if (w.translation) {
       translationHtml = `<div class="word-translation">${esc(w.translation)}</div>`;
@@ -223,24 +247,33 @@
       translationHtml = `<div class="word-translation muted">— no translation
         <button class="link-btn" data-retry="${esc(w.id)}">↻ retry</button></div>`;
     }
-    return `
-      <div class="word">
-        <div class="word-main">
-          <div class="word-text">${esc(w.text)}</div>
-          ${translationHtml}
-          ${w.definition ? `<div class="word-def">${esc(w.definition)}</div>` : ''}
-          ${w.example ? `<div class="word-example">“${esc(w.example)}”</div>` : ''}
-          ${w.note ? `<div class="word-note">${esc(w.note)}</div>` : ''}
-          <div class="word-langs">${esc(langName(w.sourceLang))} → ${esc(langName(w.targetLang))}</div>
-        </div>
+
+    const details = isOpen ? `
+      <div class="word-details">
+        ${w.definition ? `<div class="word-def">${esc(w.definition)}</div>` : ''}
+        ${w.example ? `<div class="word-example">“${esc(w.example)}”</div>` : ''}
+        ${w.note ? `<div class="word-note">${esc(w.note)}</div>` : ''}
+        <div class="word-langs">${esc(langName(w.sourceLang))} → ${esc(langName(w.targetLang))}</div>
         <div class="word-actions">
           <button data-edit="${esc(w.id)}">Edit</button>
           <button class="del" data-del="${esc(w.id)}">Delete</button>
         </div>
+      </div>` : '';
+
+    return `
+      <div class="word ${isOpen ? 'open' : ''}">
+        <div class="word-head" data-toggle="${esc(w.id)}">
+          <div class="word-main">
+            <div class="word-text">${esc(w.text)}</div>
+            ${translationHtml}
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        ${details}
       </div>`;
   }
 
-  // --- Render sources ---
+  // --- Sources tab ---
   function renderSources() {
     const sources = Storage.getSources();
     const words = Storage.getWords();
@@ -266,7 +299,6 @@
   }
 
   function refresh() {
-    renderAddBar();
     renderFilter();
     renderList();
     renderSources();
@@ -275,7 +307,6 @@
   // --- Edit modal ---
   function openWordModal(word) {
     editingId = word.id;
-    els.modalTitle.textContent = 'Edit word';
     fillSelect(els.fSrc, LANGS, word.sourceLang);
     fillSelect(els.fTgt, LANGS, word.targetLang);
     fillSelect(els.fSource, sourceOptions(true), word.sourceId || NO_SOURCE);
@@ -292,13 +323,8 @@
     els.modal.classList.remove('hidden');
     els.fText.focus();
   }
+  function closeWordModal() { els.modal.classList.add('hidden'); editingId = null; }
 
-  function closeWordModal() {
-    els.modal.classList.add('hidden');
-    editingId = null;
-  }
-
-  // Re-fetch translation + context into the modal fields (without saving yet).
   async function refetchModal() {
     const text = els.fText.value.trim();
     if (!text) { els.fRefetchStatus.textContent = 'Enter a word first.'; return; }
@@ -310,10 +336,7 @@
     ]);
     els.fRefetch.disabled = false;
     if (tr.ok) els.fTranslation.value = tr.text;
-    if (dict.ok) {
-      els.fDefinition.value = dict.definition;
-      els.fExample.value = dict.example || '';
-    }
+    if (dict.ok) { els.fDefinition.value = dict.definition; els.fExample.value = dict.example || ''; }
     els.fRefetchStatus.textContent = (tr.ok || dict.ok) ? '' : 'Nothing found. Edit manually.';
   }
 
@@ -352,11 +375,7 @@
     const s = Storage.getSources().find(x => x.id === id);
     if (!s) return;
     const name = prompt('New source name:', s.name);
-    if (name && name.trim()) {
-      s.name = name.trim();
-      Storage.saveSource(s);
-      refresh();
-    }
+    if (name && name.trim()) { s.name = name.trim(); Storage.saveSource(s); refresh(); }
   }
 
   function deleteSource(id) {
@@ -379,9 +398,7 @@
   function switchView(view) {
     els.tabs.forEach(t => t.setAttribute('aria-current', String(t.dataset.view === view)));
     els.viewWords.classList.toggle('hidden', view !== 'words');
-    els.viewAdd.classList.toggle('hidden', view !== 'add');
     els.viewSources.classList.toggle('hidden', view !== 'sources');
-    if (view === 'add') { els.addStatus.textContent = ''; els.qWord.focus(); }
   }
 
   // --- Events ---
@@ -390,12 +407,19 @@
     els.search.addEventListener('input', renderList);
     els.filterSource.addEventListener('change', () => { filterSourceId = els.filterSource.value; renderList(); });
 
-    els.qSrc.addEventListener('change', savePrefsFromBar);
-    els.qTgt.addEventListener('change', savePrefsFromBar);
+    els.fabAdd.addEventListener('click', openAdd);
+    els.fabSettings.addEventListener('click', openSettings);
+
+    els.qSrc.addEventListener('change', savePrefsFromAdd);
     els.qSource.addEventListener('change', onQuickSourceChange);
-    els.qWord.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); addQuick(); }
-    });
+    els.qWord.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addQuick(); } });
+    els.addClose.addEventListener('click', closeAdd);
+    els.addModal.addEventListener('click', (e) => { if (e.target === els.addModal) closeAdd(); });
+
+    els.sNative.addEventListener('change', () => { saveSettings(); refresh(); });
+    els.sSourceLang.addEventListener('change', saveSettings);
+    els.settingsClose.addEventListener('click', closeSettings);
+    els.settingsModal.addEventListener('click', (e) => { if (e.target === els.settingsModal) closeSettings(); });
 
     els.fRefetch.addEventListener('click', refetchModal);
     els.fSource.addEventListener('change', () => {
@@ -406,16 +430,23 @@
     els.fSave.addEventListener('click', saveWord);
     els.modal.addEventListener('click', (e) => { if (e.target === els.modal) closeWordModal(); });
 
-    // Delegation for dynamic word buttons.
+    // Delegated clicks on word cards (buttons checked before row toggle).
     els.groups.addEventListener('click', (e) => {
-      const { edit, del, retry } = e.target.dataset;
-      if (edit) {
-        const w = Storage.getWords().find(x => x.id === edit);
+      const editBtn = e.target.closest('[data-edit]');
+      const delBtn = e.target.closest('[data-del]');
+      const retryBtn = e.target.closest('[data-retry]');
+      const toggle = e.target.closest('[data-toggle]');
+      if (editBtn) {
+        const w = Storage.getWords().find(x => x.id === editBtn.dataset.edit);
         if (w) openWordModal(w);
-      } else if (del) {
-        if (confirm('Delete this word?')) { Storage.deleteWord(del); refresh(); }
-      } else if (retry) {
-        enrich(retry);
+      } else if (delBtn) {
+        if (confirm('Delete this word?')) { Storage.deleteWord(delBtn.dataset.del); refresh(); }
+      } else if (retryBtn) {
+        enrich(retryBtn.dataset.retry);
+      } else if (toggle) {
+        const id = toggle.dataset.toggle;
+        expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+        renderList();
       }
     });
     els.sourceList.addEventListener('click', (e) => {

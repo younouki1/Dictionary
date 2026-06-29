@@ -19,7 +19,6 @@
 <body>
   <header class="appbar">
     <button class="tab" data-view="words" aria-current="true">Words</button>
-    <button class="tab" data-view="add">Add</button>
     <button class="tab" data-view="sources">Sources</button>
   </header>
 
@@ -30,23 +29,7 @@
       <input id="search" type="search" placeholder="Search by word or translation" autocomplete="off">
     </div>
     <div id="word-groups" class="groups"></div>
-    <p id="empty-list" class="empty hidden">No words yet. Open the Add tab to add one.</p>
-  </main>
-
-  <!-- Add a word -->
-  <main id="view-add" class="view hidden">
-    <!-- Pick languages + source once, then just type a word + Enter -->
-    <div class="addbar">
-      <div class="addbar-row">
-        <select id="q-src" aria-label="From language"></select>
-        <span class="arrow">→</span>
-        <select id="q-tgt" aria-label="To language"></select>
-        <select id="q-source" aria-label="Source"></select>
-      </div>
-      <input id="q-word" type="text" placeholder="Add a word, then press Enter"
-             autocomplete="off" autocapitalize="none" enterkeyhint="done">
-      <p id="add-status" class="hint"></p>
-    </div>
+    <p id="empty-list" class="empty hidden">No words yet. Tap + to add one.</p>
   </main>
 
   <!-- Sources -->
@@ -54,6 +37,46 @@
     <div id="source-list" class="source-list"></div>
     <p id="empty-sources" class="empty hidden">No sources yet. They appear when you add words.</p>
   </main>
+
+  <!-- Floating buttons -->
+  <button id="fab-settings" class="fab fab-secondary" aria-label="Settings">⚙</button>
+  <button id="fab-add" class="fab" aria-label="Add word">+</button>
+
+  <!-- Sheet: add words -->
+  <div id="add-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <h2>Add words</h2>
+      <p class="hint">Translating to <strong id="add-native"></strong>. Type a word and press Enter.</p>
+      <label>Word language
+        <select id="q-src"></select>
+      </label>
+      <label>Source
+        <select id="q-source"></select>
+      </label>
+      <input id="q-word" type="text" placeholder="Type a word, press Enter"
+             autocomplete="off" autocapitalize="none" enterkeyhint="done">
+      <p id="add-status" class="hint"></p>
+      <div class="actions">
+        <button id="add-close" type="button" class="primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sheet: settings -->
+  <div id="settings-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <h2>Settings</h2>
+      <label>Native language (translate to)
+        <select id="s-native"></select>
+      </label>
+      <label>Default word language (translate from)
+        <select id="s-source-lang"></select>
+      </label>
+      <div class="actions">
+        <button id="settings-close" type="button" class="primary">Done</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal: edit a word (manual corrections / re-fetch) -->
   <div id="word-modal" class="modal hidden" role="dialog" aria-modal="true">
