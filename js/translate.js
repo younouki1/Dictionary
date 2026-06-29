@@ -1,11 +1,11 @@
-// Перевод через бесплатный MyMemory API (без ключа, CORS разрешён).
-// Анонимный лимит ~5000 слов/день. Чтобы поднять до ~50000, впишите свой
-// email в EMAIL ниже (тогда добавится параметр &de=...).
+// Translation via the free MyMemory API (no key, CORS allowed).
+// Anonymous limit ~5000 words/day. To raise it to ~50000, put your email
+// in EMAIL below (it adds the &de=... parameter).
 const Translate = (() => {
   const ENDPOINT = 'https://api.mymemory.translated.net/get';
-  const EMAIL = ''; // например 'you@example.com' — необязательно
+  const EMAIL = ''; // e.g. 'you@example.com' — optional
 
-  // Возвращает { ok: true, text } или { ok: false, error }.
+  // Returns { ok: true, text } or { ok: false, error }.
   async function translate(text, srcLang, tgtLang) {
     const q = text.trim();
     if (!q) return { ok: false, error: 'empty' };
@@ -19,7 +19,7 @@ const Translate = (() => {
       const data = await res.json();
       const translated = data?.responseData?.translatedText;
       if (!translated) return { ok: false, error: 'no translation' };
-      // MyMemory может вернуть текст ошибки в поле перевода при превышении лимита.
+      // MyMemory may return an error string in the translation field when the limit is exceeded.
       if (/MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(translated)) {
         return { ok: false, error: 'limit' };
       }

@@ -1,5 +1,5 @@
-// Хранилище в localStorage. Никаких зависимостей и сети.
-// Ключи: dict.words, dict.sources, dict.prefs
+// localStorage-backed storage. No dependencies, no network.
+// Keys: dict.words, dict.sources, dict.prefs
 const Storage = (() => {
   const K_WORDS = 'dict.words';
   const K_SOURCES = 'dict.sources';
@@ -10,7 +10,7 @@ const Storage = (() => {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
     } catch {
-      // Повреждённые данные не должны ронять приложение.
+      // Corrupted data must not crash the app.
       return fallback;
     }
   }
@@ -20,10 +20,10 @@ const Storage = (() => {
   const newId = () =>
     (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2));
 
-  // --- Слова ---
+  // --- Words ---
   function getWords() { return read(K_WORDS, []); }
 
-  // Создаёт (без id) или обновляет (с id) слово. Возвращает сохранённый объект.
+  // Creates (no id) or updates (with id) a word. Returns the saved object.
   function saveWord(word) {
     const words = getWords();
     if (word.id) {
@@ -43,7 +43,7 @@ const Storage = (() => {
     write(K_WORDS, getWords().filter(w => w.id !== id));
   }
 
-  // --- Источники ---
+  // --- Sources ---
   function getSources() { return read(K_SOURCES, []); }
 
   function saveSource(source) {
@@ -60,7 +60,7 @@ const Storage = (() => {
     return source;
   }
 
-  // mode: 'detach' (слова → без источника) или 'delete' (удалить слова источника)
+  // mode: 'detach' (words -> no source) or 'delete' (delete the source's words)
   function deleteSource(id, mode = 'detach') {
     write(K_SOURCES, getSources().filter(s => s.id !== id));
     const words = getWords();
@@ -72,7 +72,7 @@ const Storage = (() => {
     }
   }
 
-  // --- Настройки (последняя языковая пара) ---
+  // --- Preferences (last language pair) ---
   function getPrefs() { return read(K_PREFS, { src: 'en', tgt: 'ru' }); }
   function setPrefs(prefs) { write(K_PREFS, prefs); }
 

@@ -1,6 +1,6 @@
-// Service worker: кэширует оболочку приложения для офлайна.
-// При изменении файлов поднимите версию CACHE, чтобы обновить кэш.
-const CACHE = 'dict-v1';
+// Service worker: caches the app shell for offline use.
+// Bump the CACHE version when files change to refresh the cache.
+const CACHE = 'dict-v2';
 const SHELL = [
   '.',
   'index.html',
@@ -30,12 +30,12 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // Запросы к API перевода никогда не кэшируем — только сеть.
+  // Never cache translation API requests — network only.
   if (url.hostname.endsWith('mymemory.translated.net')) {
-    return; // браузер выполнит запрос как обычно
+    return; // the browser performs the request normally
   }
 
-  // Оболочку отдаём cache-first, с подстраховкой из сети.
+  // Serve the shell cache-first, falling back to the network.
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request))
   );

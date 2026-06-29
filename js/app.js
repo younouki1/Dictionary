@@ -1,15 +1,15 @@
-// UI и состояние приложения. Зависит от Storage и Translate (глобальные).
+// UI and app state. Depends on Storage and Translate (globals).
 (() => {
   'use strict';
 
   const LANGS = [
-    ['en', 'Английский'], ['ru', 'Русский'], ['de', 'Немецкий'],
-    ['fr', 'Французский'], ['es', 'Испанский'], ['it', 'Итальянский'],
-    ['pt', 'Португальский'], ['pl', 'Польский'], ['uk', 'Украинский'],
-    ['tr', 'Турецкий'], ['zh', 'Китайский'], ['ja', 'Японский'],
+    ['en', 'English'], ['ru', 'Russian'], ['de', 'German'],
+    ['fr', 'French'], ['es', 'Spanish'], ['it', 'Italian'],
+    ['pt', 'Portuguese'], ['pl', 'Polish'], ['uk', 'Ukrainian'],
+    ['tr', 'Turkish'], ['zh', 'Chinese'], ['ja', 'Japanese'],
   ];
   const SOURCE_TYPES = [
-    ['book', 'Книга'], ['article', 'Статья'], ['video', 'Видео'], ['other', 'Другое'],
+    ['book', 'Book'], ['article', 'Article'], ['video', 'Video'], ['other', 'Other'],
   ];
   const NO_SOURCE = '__none__';
   const NEW_SOURCE = '__new__';
@@ -41,9 +41,9 @@
     fSave: $('f-save'),
   };
 
-  let editingId = null; // id редактируемого слова, либо null для нового
+  let editingId = null; // id of the word being edited, or null for a new one
 
-  // --- Утилиты ---
+  // --- Helpers ---
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const langName = (code) => (LANGS.find(l => l[0] === code) || [code, code])[1];
@@ -55,11 +55,11 @@
       .join('');
   }
 
-  // --- Рендер списка слов ---
+  // --- Render word list ---
   function renderList() {
     const term = els.search.value.trim().toLowerCase();
     const sources = Storage.getSources();
-    const sourceName = (id) => (sources.find(s => s.id === id) || {}).name || 'Без источника';
+    const sourceName = (id) => (sources.find(s => s.id === id) || {}).name || 'No source';
 
     let words = Storage.getWords();
     if (term) {
@@ -72,13 +72,13 @@
       els.groups.innerHTML = '';
       els.emptyList.classList.toggle('hidden', false);
       els.emptyList.textContent = term
-        ? 'Ничего не найдено.'
-        : 'Пока пусто. Нажмите + чтобы добавить первое слово.';
+        ? 'Nothing found.'
+        : 'No words yet. Tap + to add your first one.';
       return;
     }
     els.emptyList.classList.add('hidden');
 
-    // Группировка по источнику.
+    // Group by source.
     const bySource = new Map();
     for (const w of words) {
       const key = w.sourceId || NO_SOURCE;
@@ -86,25 +86,25 @@
       bySource.get(key).push(w);
     }
 
-    // Источники в порядке их списка, затем «Без источника».
+    // Sources in their list order, then "No source".
     const order = [...sources.map(s => s.id).filter(id => bySource.has(id))];
     if (bySource.has(NO_SOURCE)) order.push(NO_SOURCE);
 
     els.groups.innerHTML = order.map((key) => {
       const list = bySource.get(key)
         .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      const title = key === NO_SOURCE ? 'Без источника' : sourceName(key);
+      const title = key === NO_SOURCE ? 'No source' : sourceName(key);
       const items = list.map((w) => `
         <div class="word">
           <div class="word-main">
             <div class="word-text">${esc(w.text)}</div>
-            <div class="word-translation">${w.translation ? esc(w.translation) : '— нет перевода'}</div>
+            <div class="word-translation">${w.translation ? esc(w.translation) : '— no translation'}</div>
             ${w.note ? `<div class="word-note">${esc(w.note)}</div>` : ''}
             <div class="word-langs">${esc(langName(w.sourceLang))} → ${esc(langName(w.targetLang))}</div>
           </div>
           <div class="word-actions">
-            <button data-edit="${esc(w.id)}">Изм.</button>
-            <button class="del" data-del="${esc(w.id)}">Удал.</button>
+            <button data-edit="${esc(w.id)}">Edit</button>
+            <button class="del" data-del="${esc(w.id)}">Delete</button>
           </div>
         </div>`).join('');
       return `
@@ -118,7 +118,7 @@
     }).join('');
   }
 
-  // --- Рендер источников ---
+  // --- Render sources ---
   function renderSources() {
     const sources = Storage.getSources();
     const words = Storage.getWords();
@@ -134,11 +134,11 @@
       <div class="source-row">
         <div>
           <div>${esc(s.name)}</div>
-          <div class="meta">${esc(sourceTypeName(s.type))} · слов: ${countFor(s.id)}</div>
+          <div class="meta">${esc(sourceTypeName(s.type))} · words: ${countFor(s.id)}</div>
         </div>
         <div class="ops">
-          <button data-rename="${esc(s.id)}">Переименовать</button>
-          <button class="del" data-delsource="${esc(s.id)}">Удалить</button>
+          <button data-rename="${esc(s.id)}">Rename</button>
+          <button class="del" data-delsource="${esc(s.id)}">Delete</button>
         </div>
       </div>`).join('');
   }
@@ -148,21 +148,21 @@
     renderSources();
   }
 
-  // --- Модалка слова ---
+  // --- Word modal ---
   function openWordModal(word) {
     editingId = word ? word.id : null;
-    els.modalTitle.textContent = word ? 'Редактировать слово' : 'Новое слово';
+    els.modalTitle.textContent = word ? 'Edit word' : 'New word';
 
     const prefs = Storage.getPrefs();
     fillSelect(els.fSrc, LANGS, word ? word.sourceLang : prefs.src);
     fillSelect(els.fTgt, LANGS, word ? word.targetLang : prefs.tgt);
 
-    // Источники + спецпункты.
+    // Sources + special options.
     const sources = Storage.getSources();
     const sourceOptions = [
-      [NO_SOURCE, 'Без источника'],
+      [NO_SOURCE, 'No source'],
       ...sources.map(s => [s.id, s.name]),
-      [NEW_SOURCE, '➕ Новый источник…'],
+      [NEW_SOURCE, '➕ New source…'],
     ];
     const selectedSource = word ? (word.sourceId || NO_SOURCE) : NO_SOURCE;
     fillSelect(els.fSource, sourceOptions, selectedSource);
@@ -186,11 +186,11 @@
   async function doTranslate() {
     const text = els.fText.value.trim();
     if (!text) {
-      els.fTranslateStatus.textContent = 'Сначала введите слово.';
+      els.fTranslateStatus.textContent = 'Enter a word first.';
       return;
     }
     els.fTranslateBtn.disabled = true;
-    els.fTranslateStatus.textContent = 'Перевожу…';
+    els.fTranslateStatus.textContent = 'Translating…';
     const res = await Translate.translate(text, els.fSrc.value, els.fTgt.value);
     els.fTranslateBtn.disabled = false;
     if (res.ok) {
@@ -198,10 +198,10 @@
       els.fTranslateStatus.textContent = '';
     } else {
       const msg = res.error === 'limit'
-        ? 'Достигнут дневной лимит переводов. Введите перевод вручную.'
+        ? 'Daily translation limit reached. Enter the translation manually.'
         : res.error === 'network'
-          ? 'Нет сети. Сохраните без перевода и переведите позже.'
-          : 'Не удалось перевести. Введите перевод вручную.';
+          ? 'No connection. Save without translation and translate later.'
+          : 'Could not translate. Enter the translation manually.';
       els.fTranslateStatus.textContent = msg;
     }
   }
@@ -213,7 +213,7 @@
       return;
     }
 
-    // Источник: существующий, новый или без.
+    // Source: existing, new, or none.
     let sourceId = els.fSource.value;
     if (sourceId === NEW_SOURCE) {
       const name = els.fNewSource.value.trim();
@@ -246,12 +246,12 @@
     refresh();
   }
 
-  // --- Действия с источниками ---
+  // --- Source actions ---
   function renameSource(id) {
     const sources = Storage.getSources();
     const s = sources.find(x => x.id === id);
     if (!s) return;
-    const name = prompt('Новое название источника:', s.name);
+    const name = prompt('New source name:', s.name);
     if (name && name.trim()) {
       s.name = name.trim();
       Storage.saveSource(s);
@@ -265,29 +265,29 @@
     if (!s) return;
     const count = Storage.getWords().filter(w => w.sourceId === id).length;
     if (count === 0) {
-      if (confirm(`Удалить источник «${s.name}»?`)) {
+      if (confirm(`Delete source "${s.name}"?`)) {
         Storage.deleteSource(id, 'detach');
         refresh();
       }
       return;
     }
-    // Есть слова: спросить, что с ними делать. OK = оставить, Отмена = удалить.
+    // Has words: ask what to do with them. OK = keep, Cancel = delete.
     const keep = confirm(
-      `В источнике «${s.name}» есть слов: ${count}.\n\n` +
-      `OK — оставить слова (перенести в «Без источника»).\n` +
-      `Отмена — удалить слова вместе с источником.`);
+      `Source "${s.name}" has ${count} word(s).\n\n` +
+      `OK — keep the words (move them to "No source").\n` +
+      `Cancel — delete the words together with the source.`);
     Storage.deleteSource(id, keep ? 'detach' : 'delete');
     refresh();
   }
 
-  // --- Навигация по вкладкам ---
+  // --- Tab navigation ---
   function switchView(view) {
     els.tabs.forEach(t => t.setAttribute('aria-current', String(t.dataset.view === view)));
     els.viewList.classList.toggle('hidden', view !== 'list');
     els.viewSources.classList.toggle('hidden', view !== 'sources');
   }
 
-  // --- События ---
+  // --- Events ---
   function bind() {
     els.tabs.forEach(t => t.addEventListener('click', () => switchView(t.dataset.view)));
     els.search.addEventListener('input', renderList);
@@ -301,10 +301,10 @@
     els.fCancel.addEventListener('click', closeWordModal);
     els.fSave.addEventListener('click', saveWord);
     els.modal.addEventListener('click', (e) => {
-      if (e.target === els.modal) closeWordModal(); // клик по подложке
+      if (e.target === els.modal) closeWordModal(); // click on the backdrop
     });
 
-    // Делегирование для динамических кнопок.
+    // Delegation for dynamic buttons.
     els.groups.addEventListener('click', (e) => {
       const editId = e.target.dataset.edit;
       const delId = e.target.dataset.del;
@@ -312,7 +312,7 @@
         const w = Storage.getWords().find(x => x.id === editId);
         if (w) openWordModal(w);
       } else if (delId) {
-        if (confirm('Удалить это слово?')) {
+        if (confirm('Delete this word?')) {
           Storage.deleteWord(delId);
           refresh();
         }
@@ -324,16 +324,16 @@
     });
   }
 
-  // --- Service worker для офлайна ---
+  // --- Service worker for offline use ---
   function registerSW() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => { /* офлайн-режим просто не включится */ });
+        navigator.serviceWorker.register('sw.js').catch(() => { /* offline mode just won't turn on */ });
       });
     }
   }
 
-  // --- Старт ---
+  // --- Start ---
   bind();
   refresh();
   registerSW();

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Словарь</title>
+  <title>Dictionary</title>
 
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
@@ -11,72 +11,72 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Словарь">
+  <meta name="apple-mobile-web-app-title" content="Dictionary">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
 
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <header class="appbar">
-    <button class="tab" data-view="list" aria-current="true">Слова</button>
-    <button class="tab" data-view="sources">Источники</button>
+    <button class="tab" data-view="list" aria-current="true">Words</button>
+    <button class="tab" data-view="sources">Sources</button>
   </header>
 
-  <!-- Список слов -->
+  <!-- Word list -->
   <main id="view-list" class="view">
     <div class="toolbar">
-      <input id="search" type="search" placeholder="Поиск по слову или переводу" autocomplete="off">
+      <input id="search" type="search" placeholder="Search by word or translation" autocomplete="off">
     </div>
     <div id="word-groups" class="groups"></div>
-    <p id="empty-list" class="empty hidden">Пока пусто. Нажмите + чтобы добавить первое слово.</p>
+    <p id="empty-list" class="empty hidden">No words yet. Tap + to add your first one.</p>
   </main>
 
-  <!-- Источники -->
+  <!-- Sources -->
   <main id="view-sources" class="view hidden">
     <div id="source-list" class="source-list"></div>
-    <p id="empty-sources" class="empty hidden">Источников ещё нет. Они появятся при добавлении слов.</p>
+    <p id="empty-sources" class="empty hidden">No sources yet. They appear when you add words.</p>
   </main>
 
-  <button id="fab" class="fab" aria-label="Добавить слово">+</button>
+  <button id="fab" class="fab" aria-label="Add word">+</button>
 
-  <!-- Модалка: добавить/редактировать слово -->
+  <!-- Modal: add / edit word -->
   <div id="word-modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="sheet">
-      <h2 id="word-modal-title">Новое слово</h2>
+      <h2 id="word-modal-title">New word</h2>
 
-      <label>Слово
+      <label>Word
         <input id="f-text" type="text" autocomplete="off" autocapitalize="none">
       </label>
 
       <div class="row">
-        <label>С языка
+        <label>From
           <select id="f-src"></select>
         </label>
-        <label>На язык
+        <label>To
           <select id="f-tgt"></select>
         </label>
       </div>
 
-      <label>Перевод
+      <label>Translation
         <div class="with-btn">
           <input id="f-translation" type="text" autocomplete="off">
-          <button id="f-translate-btn" type="button">Перевести</button>
+          <button id="f-translate-btn" type="button">Translate</button>
         </div>
         <span id="f-translate-status" class="hint"></span>
       </label>
 
-      <label>Источник
+      <label>Source
         <select id="f-source"></select>
       </label>
-      <input id="f-new-source" type="text" class="hidden" placeholder="Название источника (книга, статья…)" autocomplete="off">
+      <input id="f-new-source" type="text" class="hidden" placeholder="Source name (book, article…)" autocomplete="off">
 
-      <label>Заметка (необязательно)
+      <label>Note (optional)
         <textarea id="f-note" rows="2"></textarea>
       </label>
 
       <div class="actions">
-        <button id="f-cancel" type="button" class="ghost">Отмена</button>
-        <button id="f-save" type="button" class="primary">Сохранить</button>
+        <button id="f-cancel" type="button" class="ghost">Cancel</button>
+        <button id="f-save" type="button" class="primary">Save</button>
       </div>
     </div>
   </div>
