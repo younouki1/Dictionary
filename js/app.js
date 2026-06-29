@@ -111,6 +111,8 @@
     els.qWord.focus();
   }
   function closeAdd() { els.addModal.classList.add('hidden'); }
+  // Done = add the typed word (if any), then close. Makes Done equivalent to Enter.
+  function doneAdd() { addQuick(); closeAdd(); }
 
   function savePrefsFromAdd() {
     const prefs = Storage.getPrefs();
@@ -459,7 +461,7 @@
     els.qSrc.addEventListener('change', savePrefsFromAdd);
     els.qSource.addEventListener('change', savePrefsFromAdd);
     els.qWord.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addQuick(); } });
-    els.addClose.addEventListener('click', closeAdd);
+    els.addClose.addEventListener('click', doneAdd);
     els.addModal.addEventListener('click', (e) => { if (e.target === els.addModal) closeAdd(); });
 
     els.sNative.addEventListener('change', () => { saveSettings(); refresh(); });

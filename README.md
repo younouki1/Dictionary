@@ -5,8 +5,8 @@ automatically fetches the **translation** plus a **definition and usage
 example**, then groups everything by **source** (book, article, video). Runs on
 your phone like a normal app, with no App Store and no Xcode.
 
-- **Translation** — free [MyMemory API](https://mymemory.translated.net/) (no key).
-- **Definition + example** — free [Free Dictionary API](https://dictionaryapi.dev/) (no key).
+- **Translation** — Google's free endpoint (no key), with [MyMemory](https://mymemory.translated.net/) as a fallback.
+- **Definition + example + IPA transcription** — free [Free Dictionary API](https://dictionaryapi.dev/) (no key).
 - **Storage** — `localStorage` in the phone's browser. No server, no accounts; data never leaves the device.
 - **No dependencies** — plain HTML/CSS/JS, no build step.
 
@@ -68,10 +68,12 @@ will erase them, and data does not sync between devices. To back up, open the
 - **Import words (JSON)** restores from such a file. Import **merges by id**
   (adds new entries, updates matching ones); nothing is deleted.
 
-## Translation limit
+## Translation
 
-Anonymous MyMemory allows ~5000 words/day. To raise it to ~50000, put your email
-in the `EMAIL` constant in `js/translate.js`.
+The primary translator is Google's free endpoint (unofficial, no key). If it is
+unavailable, the app falls back to MyMemory. Anonymous MyMemory allows ~5000
+words/day; to raise it to ~50000, put your email in the `EMAIL` constant in
+`js/translate.js`.
 
 ## Project structure
 

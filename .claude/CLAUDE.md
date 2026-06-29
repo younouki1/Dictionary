@@ -17,8 +17,10 @@ Home Screen". No backend, no accounts: all data lives in the browser's
 - Build: none (static files served as-is)
 - Runtime: any modern browser; target is iOS Safari (PWA, offline via service worker)
 - Dependencies: zero runtime deps. External HTTP APIs only:
-  - MyMemory (translation) — no key, CORS ok
-  - Free Dictionary API `dictionaryapi.dev` (definition + example) — no key, CORS ok
+  - Google translate endpoint (`translate.googleapis.com`, client=gtx) — primary translator,
+    unofficial/no key/CORS ok; MyMemory is the fallback (picks the best-quality match)
+  - Free Dictionary API `dictionaryapi.dev` (definition + example + IPA) — no key, CORS ok.
+    Inflected forms (e.g. "infants") fall back to a base form ("infant") for the transcription.
 
 ## Commands
 
