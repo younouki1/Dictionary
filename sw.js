@@ -1,6 +1,6 @@
 // Service worker: caches the app shell for offline use.
 // Bump the CACHE version when files change to refresh the cache.
-const CACHE = 'dict-v3';
+const CACHE = 'dict-v4';
 const SHELL = [
   '.',
   'index.html',

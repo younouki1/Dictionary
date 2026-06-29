@@ -96,9 +96,24 @@ body {
   font-size: 16px;
 }
 
-.toolbar { margin-bottom: 12px; }
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+#filter-source {
+  flex: 0 0 auto;
+  max-width: 45%;
+  padding: 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+}
 #search {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;

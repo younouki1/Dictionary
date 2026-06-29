@@ -13,17 +13,21 @@
   ];
   const NO_SOURCE = '__none__';
   const NEW_SOURCE = '__new__';
+  const ALL_SOURCES = '__all__';
 
   // --- DOM ---
   const $ = (id) => document.getElementById(id);
   const els = {
     tabs: document.querySelectorAll('.tab'),
-    viewList: $('view-list'),
+    viewWords: $('view-words'),
+    viewAdd: $('view-add'),
     viewSources: $('view-sources'),
     qSrc: $('q-src'),
     qTgt: $('q-tgt'),
     qSource: $('q-source'),
     qWord: $('q-word'),
+    addStatus: $('add-status'),
+    filterSource: $('filter-source'),
     search: $('search'),
     groups: $('word-groups'),
     emptyList: $('empty-list'),
@@ -46,8 +50,9 @@
     fSave: $('f-save'),
   };
 
-  let editingId = null;        // id of the word being edited, or null
-  const pending = new Set();   // ids currently being enriched (translation/context)
+  let editingId = null;          // id of the word being edited, or null
+  let filterSourceId = ALL_SOURCES; // current source filter on the Words tab
+  const pending = new Set();     // ids currently being enriched (translation/context)
 
   // --- Helpers ---
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -119,6 +124,7 @@
 
     els.qWord.value = '';
     els.qWord.focus(); // keep adding words in a row
+    els.addStatus.textContent = `Added “${word.text}” — fetching translation…`;
     pending.add(word.id);
     refresh();
     enrich(word.id);
@@ -149,6 +155,14 @@
     refresh();
   }
 
+  // Populate the source filter dropdown on the Words tab.
+  function renderFilter() {
+    const opts = [[ALL_SOURCES, 'All sources'], ...Storage.getSources().map(s => [s.id, s.name]), [NO_SOURCE, 'No source']];
+    // Drop a stale selection (e.g. deleted source) back to "All".
+    if (!opts.some(([v]) => v === filterSourceId)) filterSourceId = ALL_SOURCES;
+    fillSelect(els.filterSource, opts, filterSourceId);
+  }
+
   // --- Render word list ---
   function renderList() {
     const term = els.search.value.trim().toLowerCase();
@@ -156,6 +170,8 @@
     const sourceName = (id) => (sources.find(s => s.id === id) || {}).name || 'No source';
 
     let words = Storage.getWords();
+    if (filterSourceId === NO_SOURCE) words = words.filter(w => !w.sourceId);
+    else if (filterSourceId !== ALL_SOURCES) words = words.filter(w => w.sourceId === filterSourceId);
     if (term) {
       words = words.filter(w =>
         w.text.toLowerCase().includes(term) ||
@@ -165,9 +181,9 @@
     if (words.length === 0) {
       els.groups.innerHTML = '';
       els.emptyList.classList.remove('hidden');
-      els.emptyList.textContent = term
-        ? 'Nothing found.'
-        : 'No words yet. Type a word above and press Enter.';
+      els.emptyList.textContent = (term || filterSourceId !== ALL_SOURCES)
+        ? 'Nothing here.'
+        : 'No words yet. Open the Add tab to add one.';
       return;
     }
     els.emptyList.classList.add('hidden');
@@ -251,6 +267,7 @@
 
   function refresh() {
     renderAddBar();
+    renderFilter();
     renderList();
     renderSources();
   }
@@ -361,14 +378,17 @@
   // --- Tab navigation ---
   function switchView(view) {
     els.tabs.forEach(t => t.setAttribute('aria-current', String(t.dataset.view === view)));
-    els.viewList.classList.toggle('hidden', view !== 'list');
+    els.viewWords.classList.toggle('hidden', view !== 'words');
+    els.viewAdd.classList.toggle('hidden', view !== 'add');
     els.viewSources.classList.toggle('hidden', view !== 'sources');
+    if (view === 'add') { els.addStatus.textContent = ''; els.qWord.focus(); }
   }
 
   // --- Events ---
   function bind() {
     els.tabs.forEach(t => t.addEventListener('click', () => switchView(t.dataset.view)));
     els.search.addEventListener('input', renderList);
+    els.filterSource.addEventListener('change', () => { filterSourceId = els.filterSource.value; renderList(); });
 
     els.qSrc.addEventListener('change', savePrefsFromBar);
     els.qTgt.addEventListener('change', savePrefsFromBar);
